@@ -8,7 +8,7 @@
 #include "io430.h"
 
 /** configure it before using */
-char radarID = 0x03; // change ID for different devices
+char radarID = 0x01; // change ID for different devices
 
 /** initial parameters */
 char queryMode;
