@@ -27,6 +27,6 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 
 ## Screenshots
 ### Query Mode
-
-
+[[https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/query.PNG?raw=true]]
 ### Continuous Mode
+[[https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/continuous.PNG?raw=true]]
