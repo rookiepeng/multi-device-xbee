@@ -2,12 +2,19 @@
 * Multiple radars for motion detection with XBee
 * Sampling rate: 20 Hz
 * By: Zhengyu Peng
-* Dec. 12, 2016
+* Dec. 18, 2016
 */
 
 #include "io430.h"
 
-char radarID = 0x01;  // change ID for different devices
+/** configure it before using */
+char radarID = 0x01; // change ID for different devices
+
+/** initial parameters */
+char queryMode = 0x10 + radarID;      // query mode, send out data when query signal received
+char continuousMode = 0x20 + radarID; // continous mode, send out data continuously
+char isQuery = 0;
+char isContinuous = 1;
 
 int Code0 = 0x0040;
 int Code1 = 0x80C0;
@@ -22,6 +29,8 @@ char cache1ready = 0;
 char cache2ready = 0;
 int saveIndex = 0;
 
+int ccr = 410; // sampling rate = 32768/ccr
+
 /** cache 1 */
 char cacheIHigh[200] = {0}; // 20 Hz 10s data
 char cacheILow[200] = {0};
@@ -34,6 +43,9 @@ char cacheIILow[200] = {0};
 char cacheQQHigh[200] = {0};
 char cacheQQLow[200] = {0};
 
+//char sendCache1=0;
+//char sendCache2=0;
+
 void sendCache(char cache);
 void clockConfig();
 
@@ -45,12 +57,11 @@ void main(void)
   clockConfig();
 
   /** ADC configuration */
+  P6SEL = 0x03;
   ADC12CTL0 = SHT0_2 + REF2_5V + REFON + MSC + ADC12ON;
   ADC12CTL1 = SHP + CONSEQ_3;
   ADC12MCTL0 = INCH_0;
   ADC12MCTL1 = INCH_1 + EOS;
-  P6SEL = 0x03;
-
   ADC12IE = 0x02;       // Enable ADC12IFG.1
   ADC12CTL0 |= ENC;     // Enable conversions
   ADC12CTL0 |= ADC12SC; // Start convn - software trigger
@@ -70,7 +81,8 @@ void main(void)
   CCR0 = 1;
   TACTL = TASSEL_1 + MC_1; //
 
-  __bis_SR_register(LPM3_bits + GIE); // Enter LPM3, interrupts enabled
+  /** Enter LPM3, interrupts enabled */
+  __bis_SR_register(LPM3_bits + GIE);
 }
 
 #pragma vector = ADC12_VECTOR
@@ -83,7 +95,7 @@ __interrupt void ADC12ISR(void)
 #pragma vector = TIMERA0_VECTOR
 __interrupt void Timer_A(void)
 {
-  CCR0 = 1638; // sampling rate = 32768/CCR0
+  CCR0 = ccr; // sampling rate = 32768/CCR0
 
   /**
   * I channel
@@ -94,6 +106,7 @@ __interrupt void Timer_A(void)
   * |1|0| | | | | | | Higher bits
   * |1|1| | | | | | | Lower bits
   */
+
   Code0 = 0x0040;
   Code0 |= (I >> 6) << 8;
   Code0 |= (I & 0x003f);
@@ -104,144 +117,178 @@ __interrupt void Timer_A(void)
 
   if (startADC)
   {
-    if (saveTo1)
+    if (isContinuous)
     {
-      cacheIHigh[saveIndex] = (Code0 & 0xff00) >> 8;
-      cacheILow[saveIndex] = (Code0 & 0x00ff);
-      cacheQHigh[saveIndex] = (Code1 & 0xff00) >> 8;
-      cacheQLow[saveIndex] = (Code1 & 0x00ff);
-      if (saveIndex < 199)
-      {
-        saveIndex++;
-      }
-      else
-      {
-        saveIndex = 0;
-        saveTo1 = 0;
-        cache1ready = 1;
-        //P2OUT^=0x10;
-        //P2OUT |= 0x10;
-      }
+      while (!(IFG2 & UCA0TXIFG))
+        ;
+      UCA0TXBUF = (Code0 & 0xff00) >> 8;
+      while (!(IFG2 & UCA0TXIFG))
+        ;
+      UCA0TXBUF = (Code0 & 0x00ff);
+      while (!(IFG2 & UCA0TXIFG))
+        ;
+      UCA0TXBUF = (Code1 & 0xff00) >> 8;
+      while (!(IFG2 & UCA0TXIFG))
+        ;
+      UCA0TXBUF = (Code1 & 0x00ff);
     }
-    else
+    else if (isQuery)
     {
-      cacheIIHigh[saveIndex] = (Code0 & 0xff00) >> 8;
-      cacheIILow[saveIndex] = (Code0 & 0x00ff);
-      cacheQQHigh[saveIndex] = (Code1 & 0xff00) >> 8;
-      cacheQQLow[saveIndex] = (Code1 & 0x00ff);
-      if (saveIndex < 199)
+      if (cache1ready == 0 && saveTo1)
       {
-        saveIndex++;
+        cacheIHigh[saveIndex] = (Code0 & 0xff00) >> 8;
+        cacheILow[saveIndex] = (Code0 & 0x00ff);
+        cacheQHigh[saveIndex] = (Code1 & 0xff00) >> 8;
+        cacheQLow[saveIndex] = (Code1 & 0x00ff);
+        if (saveIndex < 199)
+        {
+          saveIndex++;
+        }
+        else
+        {
+          saveIndex = 0;
+          saveTo1 = 0;
+          cache1ready = 1;
+          //P2OUT^=0x10;
+          //P2OUT |= 0x10;
+        }
       }
-      else
+      else if (cache2ready == 0 && saveTo1 == 0)
       {
-        saveIndex = 0;
-        saveTo1 = 1;
-        cache2ready = 1;
-        //P2OUT^=0x10;
-        //P2OUT &= 0xEF;
+        cacheIIHigh[saveIndex] = (Code0 & 0xff00) >> 8;
+        cacheIILow[saveIndex] = (Code0 & 0x00ff);
+        cacheQQHigh[saveIndex] = (Code1 & 0xff00) >> 8;
+        cacheQQLow[saveIndex] = (Code1 & 0x00ff);
+        if (saveIndex < 199)
+        {
+          saveIndex++;
+        }
+        else
+        {
+          saveIndex = 0;
+          saveTo1 = 1;
+          cache2ready = 1;
+          //P2OUT^=0x10;
+          //P2OUT &= 0xEF;
+        }
       }
     }
   }
-}
 
 #pragma vector = USCIAB0RX_VECTOR
-__interrupt void USCI0RX_ISR(void)
-{
-  startADC = 1; // start to save ADC data as soon as a UART byte is received
-  if (UCA0RXBUF == radarID)
+  __interrupt void USCI0RX_ISR(void)
   {
-    if (cache1ready != 0 || cache2ready != 0)
+    startADC = 1;             // start to save ADC data as soon as a UART byte is received
+    if (UCA0RXBUF == radarID) // query radar in queryMode
     {
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = 0x01; // response to the computer, one of the caches is ready
-      if (cache1ready)  // send cache 1
+      if (cache1ready != 0 || cache2ready != 0)
       {
-        sendCache(1);
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = 0x01; // response to the computer, one of the caches is ready
+        if (cache1ready)  // send cache 1
+        {
+          sendCache(1);
+          //sendCache1=1;
+        }
+        else if (cache2ready)
+        {
+          sendCache(2);
+          //sendCache2=1;
+        }
       }
-      else if (cache2ready)
+      else // send cache 2
       {
-        sendCache(2);
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = 0x00; // caches are not ready
       }
     }
-    else // send cache 2
+    else if (UCA0RXBUF == queryMode)
     {
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = 0x00; // caches are not ready
+      ccr = 1638; // 20 Hz
+      //oneChannel = 0;
+    }
+    else if (UCA0RXBUF == continuousMode)
+    {
+      ccr = 410; // 80 Hz
     }
   }
-}
 
-void sendCache(char cache)
-{
-  if (cache == 1)
+  void sendCache(char cache)
   {
-    for (int i = 0; i < 200; i++)
+    if (cache == 1)
     {
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheIHigh[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheILow[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheQHigh[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheQLow[i];
+      for (int i = 0; i < 200; i++)
+      {
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = cacheIHigh[i];
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = cacheILow[i];
+        if (oneChannel == 0)
+        {
+          while (!(IFG2 & UCA0TXIFG))
+            ;
+          UCA0TXBUF = cacheQHigh[i];
+          while (!(IFG2 & UCA0TXIFG))
+            ;
+          UCA0TXBUF = cacheQLow[i];
+        }
+      }
+      cache1ready = 0;
     }
-    cache1ready = 0;
-  }
-  else if (cache == 2)
-  {
-    for (int i = 0; i < 200; i++)
+    else if (cache == 2)
     {
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheIIHigh[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheIILow[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheQQHigh[i];
-      while (!(IFG2 & UCA0TXIFG))
-        ;
-      UCA0TXBUF = cacheQQLow[i];
+      for (int i = 0; i < 200; i++)
+      {
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = cacheIIHigh[i];
+        while (!(IFG2 & UCA0TXIFG))
+          ;
+        UCA0TXBUF = cacheIILow[i];
+        if (oneChannel == 0)
+        {
+          while (!(IFG2 & UCA0TXIFG))
+            ;
+          UCA0TXBUF = cacheQQHigh[i];
+          while (!(IFG2 & UCA0TXIFG))
+            ;
+          UCA0TXBUF = cacheQQLow[i];
+        }
+      }
+      cache2ready = 0;
     }
-    cache2ready = 0;
   }
-}
 
-void clockConfig()
-{
-  if (CALBC1_8MHZ == 0xFF) // If calibration constant erased
+  void clockConfig()
   {
-    while (1)
-      ; // do not load, trap CPU!!
+    if (CALBC1_8MHZ == 0xFF) // If calibration constant erased
+    {
+      while (1)
+        ; // do not load, trap CPU!!
+    }
+    DCOCTL = 0;            // Select lowest DCOx and MODx settings
+    BCSCTL1 = CALBC1_8MHZ; // Set DCO to 8MHz
+    DCOCTL = CALDCO_8MHZ;
+
+    // Select 32kHz Crystal for ACLK
+    // BCSCTL1 &= (~XTS);	// ACLK = LFXT1CLK
+    // BCSCTL2 &= ~(BIT4|BIT5);	// 32768Hz crystal on LFXT1
+
+    // Clock output
+    //            MSP430F261x/241x
+    //             -----------------
+    //         /|\|              XIN|-
+    //          | |                 | 32kHz
+    //          --|RST          XOUT|-
+    //            |                 |
+    //            |             P5.6|-->ACLK = 32kHz
+    //            |             P5.5|-->SMCLK = 8MHz
+    //            |             P5.4|-->MCLK = DCO
+    //            |             P5.3|-->MCLK/10
+    // P5DIR |= 0x78;
+    // P5SEL |= 0x70;
   }
-  DCOCTL = 0;            // Select lowest DCOx and MODx settings
-  BCSCTL1 = CALBC1_8MHZ; // Set DCO to 8MHz
-  DCOCTL = CALDCO_8MHZ;
-
-  // Select 32kHz Crystal for ACLK
-  // BCSCTL1 &= (~XTS);	// ACLK = LFXT1CLK
-  // BCSCTL2 &= ~(BIT4|BIT5);	// 32768Hz crystal on LFXT1
-
-  // Clock output
-  //            MSP430F261x/241x
-  //             -----------------
-  //         /|\|              XIN|-
-  //          | |                 | 32kHz
-  //          --|RST          XOUT|-
-  //            |                 |
-  //            |             P5.6|-->ACLK = 32kHz
-  //            |             P5.5|-->SMCLK = 8MHz
-  //            |             P5.4|-->MCLK = DCO
-  //            |             P5.3|-->MCLK/10
-  // P5DIR |= 0x78;
-  // P5SEL |= 0x70;
-}
