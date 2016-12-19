@@ -1,5 +1,0 @@
-FILE DELETED
-
-Microsoft Forefront Protection for Exchange Server removed a file since it was found to match a filter.
-File name: "ADC_twoports_coding_dac with wirless tuning.rar->ADC_twoports_coding_dac with wirless tuning\settings\main.cspy.bat"
-Filter name: "FILE FILTER= Delete Attachment: *.bat"

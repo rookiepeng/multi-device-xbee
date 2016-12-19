@@ -8,13 +8,13 @@
 #include "io430.h"
 
 /** configure it before using */
-char radarID = 0x01; // change ID for different devices
+char radarID = 0x03; // change ID for different devices
 
 /** initial parameters */
-char queryMode = 0x10 + radarID;      // query mode, send out data when query signal received
-char continuousMode = 0x20 + radarID; // continous mode, send out data continuously
-char isQuery = 0;
-char isContinuous = 1;
+char queryMode;
+char continuousMode;
+char isQuery = 1;
+char isContinuous = 0;
 
 int Code0 = 0x0040;
 int Code1 = 0x80C0;
@@ -29,7 +29,7 @@ char cache1ready = 0;
 char cache2ready = 0;
 int saveIndex = 0;
 
-int ccr = 410; // sampling rate = 32768/ccr
+int ccr = 1638; // sampling rate = 32768/ccr
 
 /** cache 1 */
 char cacheIHigh[200] = {0}; // 20 Hz 10s data
@@ -53,6 +53,9 @@ void main(void)
 {
   // Stop watchdog timer to prevent time out reset
   WDTCTL = WDTPW + WDTHOLD;
+  
+  queryMode = 0x10 + radarID;      // query mode, send out data when query signal received
+  continuousMode = 0x20 + radarID; // continous mode, send out data continuously
 
   clockConfig();
 
@@ -174,10 +177,11 @@ __interrupt void Timer_A(void)
       }
     }
   }
+}
 
 #pragma vector = USCIAB0RX_VECTOR
-  __interrupt void USCI0RX_ISR(void)
-  {
+__interrupt void USCI0RX_ISR(void)
+{
     startADC = 1;             // start to save ADC data as soon as a UART byte is received
     if (UCA0RXBUF == radarID) // query radar in queryMode
     {
@@ -207,13 +211,17 @@ __interrupt void Timer_A(void)
     else if (UCA0RXBUF == queryMode)
     {
       ccr = 1638; // 20 Hz
+      isQuery=1;
+      isContinuous=0;
       //oneChannel = 0;
     }
     else if (UCA0RXBUF == continuousMode)
     {
       ccr = 410; // 80 Hz
+      isQuery=0;
+      isContinuous=1;
     }
-  }
+}
 
   void sendCache(char cache)
   {
@@ -227,15 +235,14 @@ __interrupt void Timer_A(void)
         while (!(IFG2 & UCA0TXIFG))
           ;
         UCA0TXBUF = cacheILow[i];
-        if (oneChannel == 0)
-        {
+
           while (!(IFG2 & UCA0TXIFG))
             ;
           UCA0TXBUF = cacheQHigh[i];
           while (!(IFG2 & UCA0TXIFG))
             ;
           UCA0TXBUF = cacheQLow[i];
-        }
+        
       }
       cache1ready = 0;
     }
@@ -249,15 +256,14 @@ __interrupt void Timer_A(void)
         while (!(IFG2 & UCA0TXIFG))
           ;
         UCA0TXBUF = cacheIILow[i];
-        if (oneChannel == 0)
-        {
+
           while (!(IFG2 & UCA0TXIFG))
             ;
           UCA0TXBUF = cacheQQHigh[i];
           while (!(IFG2 & UCA0TXIFG))
             ;
           UCA0TXBUF = cacheQQLow[i];
-        }
+        
       }
       cache2ready = 0;
     }
