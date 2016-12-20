@@ -16,12 +16,12 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 ## Running
 ### Query Mode
 - Support 3 devices at the same time
-- Sampling rate: 20 Hz x 12 bits x 2 channels each device
+- Sampling: 20 Hz x 12 bits x 2 channels each device
 - Update every 10 s
 
 ### Continuous Mode
 - 1 device
-- Sampling rate: 80 Hz x 12 bits x 2 channels
+- Sampling: 80 Hz x 12 bits x 2 channels
 - Update every 0.0125 s
 
 ## Screenshots
