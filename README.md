@@ -12,8 +12,7 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 
 ## Configuration
 ### Connections
-
-
+![Connection](https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/connection.png?raw=true)
 ## Running
 ### Query Mode
 - Support 3 devices at the same time
