@@ -15,11 +15,13 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 ![Connection](https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/connection.png?raw=true)
 ## Running
 ### Query Mode
+LabVIEW code: LabVIEW/XBee_Query.vi
 - Support 3 devices at the same time
 - Sampling: 20 Hz x 12 bits x 2 channels each device
 - Update every 10 s
 
 ### Continuous Mode
+LabVIEW code: LabVIEW/XBee_Continuous.vi
 - 1 device
 - Sampling: 80 Hz x 12 bits x 2 channels
 - Update every 0.0125 s
