@@ -2,6 +2,7 @@
 Use MSP430 to sample analog signals (from motion radars in my application), and transfer data to a computer through XBee (ZigBee) modules.
 
 ## Environments
+
 ### Hardware
 - MSP430 (M430F261X)
 - XBee module
@@ -11,9 +12,12 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 - National Instruments (NI) LabVIEW 2015 or newer
 
 ## Configuration
+
 ### Connections
-![Connection](https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/connection.png?raw=true)
+<img src="https://rookiepeng.github.io/Multi_Radar_XBee/img/connection.png">
+
 ## Running
+
 ### Query Mode
 LabVIEW code: LabVIEW/XBee_Query.vi
 - Support 3 devices at the same time
@@ -27,7 +31,9 @@ LabVIEW code: LabVIEW/XBee_Continuous.vi
 - Update every 0.0125 s
 
 ## Screenshots
+
 ### Query Mode
-![Query mode](https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/query.PNG?raw=true)
+<img src="https://rookiepeng.github.io/Multi_Radar_XBee/img/query.png">
+
 ### Continuous Mode
-![Continuous mode](https://github.com/rookiepeng/Multi_Radar_XBee/blob/master/Figures/continuous.PNG?raw=true)
+<img src="https://rookiepeng.github.io/Multi_Radar_XBee/img/continuous.png">
