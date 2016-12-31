@@ -33,7 +33,7 @@ LabVIEW code: LabVIEW/XBee_Continuous.vi
 ## Screenshots
 
 ### Query Mode
-<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/query.png">
+<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/queryMode.png">
 
 ### Continuous Mode
-<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/continuous.png">
+<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/continuousMode.png">
