@@ -14,7 +14,7 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 ## Configuration
 
 ### Connections
-<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/connection.png">
+<img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/connection.png?raw=true">
 
 ## Running
 
@@ -33,7 +33,7 @@ LabVIEW code: LabVIEW/XBee_Continuous.vi
 ## Screenshots
 
 ### Query Mode
-<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/queryMode.png">
+<img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/queryMode.png?raw=true">
 
 ### Continuous Mode
-<img src="https://rookiepeng.github.io/Multi-Device-XBee/img/continuousMode.png">
+<img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/continuousMode.png?raw=true">
