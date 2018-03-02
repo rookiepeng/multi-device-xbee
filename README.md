@@ -16,6 +16,20 @@ Use MSP430 to sample analog signals (from motion radars in my application), and 
 ### Connections
 <img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/connection.png?raw=true">
 
+### XBee modules
+
+#### Coordinator
+
+Connect with the computer
+
+<img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/coordinator.png?raw=true">
+
+#### End device
+
+Connect with the sensors
+
+<img src="https://github.com/rookiepeng/Multi-Device-XBee/blob/master/docs/end-device.png?raw=true">
+
 ## Running
 
 ### Query Mode
